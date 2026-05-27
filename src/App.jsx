@@ -42,7 +42,36 @@ export default function LucinaVIPTracker() {
     localStorage.setItem("lucina-history", JSON.stringify(history));
   }, [history]);
 
-  const vipBorder = 14200000;
+  const [vipBorder, setVipBorder] = useState(() => {
+    const saved = localStorage.getItem("lucina-vip-border");
+    return saved ? Number(saved) : 14200000;
+  });
+
+  useEffect(() => {
+    const fetchVipBorder = async () => {
+      try {
+        const response = await fetch(
+          "https://elitegsp.com/api/ultimate"
+        );
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+
+        if (data?.eliteGSP) {
+          setVipBorder(Number(data.eliteGSP));
+          localStorage.setItem(
+            "lucina-vip-border",
+            String(data.eliteGSP)
+          );
+        }
+      } catch (error) {
+        console.log("VIP取得失敗", error);
+      }
+    };
+
+    fetchVipBorder();
+  }, []);
   const diff = Math.max(0, vipBorder - gsp);
 
   const addWin = () => {
@@ -65,6 +94,23 @@ export default function LucinaVIPTracker() {
   };
 
   const totalGames = wins + losses;
+
+  const currentStreak = (() => {
+    if (history.length === 0) return 0;
+
+    const first = history[0];
+    let count = 0;
+
+    for (const item of history) {
+      if (item === first) {
+        count++;
+      } else {
+        break;
+      }
+    }
+
+    return first === "W" ? count : -count;
+  })();
   const winRate =
     totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
 
@@ -197,6 +243,27 @@ export default function LucinaVIPTracker() {
                     {item}
                   </div>
                 ))}
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-zinc-800 p-4 border border-zinc-700">
+              <div className="text-lg font-semibold mb-3">
+                📘 今日のまとめ
+              </div>
+
+              <div className="space-y-2 text-sm text-zinc-300 leading-relaxed">
+                <p>・総試合数：{totalGames}</p>
+                <p>・勝利：{wins}</p>
+                <p>・敗北：{losses}</p>
+                <p>・勝率：{winRate}%</p>
+                <p>
+                  ・現在連勝/連敗：
+                  {currentStreak > 0
+                    ? `${currentStreak}連勝`
+                    : currentStreak < 0
+                    ? `${Math.abs(currentStreak)}連敗`
+                    : "なし"}
+                </p>
               </div>
             </div>
 
