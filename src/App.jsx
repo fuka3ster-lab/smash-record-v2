@@ -17,6 +17,11 @@ export default function LucinaVIPTracker() {
     return saved ? Number(saved) : 8400000;
   });
 
+  const [history, setHistory] = useState(() => {
+    const saved = localStorage.getItem("lucina-history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   useEffect(() => {
     localStorage.setItem("lucina-wins", wins);
   }, [wins]);
@@ -33,23 +38,30 @@ export default function LucinaVIPTracker() {
     localStorage.setItem("lucina-gsp", gsp);
   }, [gsp]);
 
+  useEffect(() => {
+    localStorage.setItem("lucina-history", JSON.stringify(history));
+  }, [history]);
+
   const vipBorder = 14200000;
   const diff = Math.max(0, vipBorder - gsp);
 
   const addWin = () => {
     setWins((prev) => prev + 1);
     setGsp((prev) => prev + 100000);
+    setHistory((prev) => ["W", ...prev].slice(0, 20));
   };
 
   const addLoss = () => {
     setLosses((prev) => prev + 1);
     setGsp((prev) => Math.max(0, prev - 100000));
+    setHistory((prev) => ["L", ...prev].slice(0, 20));
   };
 
   const resetSession = () => {
     setWins(0);
     setLosses(0);
     setMemo("");
+    setHistory([]);
   };
 
   const totalGames = wins + losses;
@@ -154,6 +166,37 @@ export default function LucinaVIPTracker() {
                 <div className="text-4xl font-bold text-sky-400">
                   {winRate}%
                 </div>
+              </div>
+            </div>
+
+            {losses >= 3 && (
+              <div className="mt-5 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 text-amber-300">
+                ⚠ 3敗到達！ 一旦休憩して深呼吸 ⚔️
+              </div>
+            )}
+
+            <div className="mt-5">
+              <div className="text-sm text-zinc-400 mb-2">最近の戦績</div>
+
+              <div className="flex flex-wrap gap-2">
+                {history.length === 0 && (
+                  <div className="text-zinc-500 text-sm">
+                    まだ履歴なし
+                  </div>
+                )}
+
+                {history.map((item, index) => (
+                  <div
+                    key={index}
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
+                      item === "W"
+                        ? "bg-emerald-500/20 text-emerald-400"
+                        : "bg-rose-500/20 text-rose-400"
+                    }`}
+                  >
+                    {item}
+                  </div>
+                ))}
               </div>
             </div>
 
