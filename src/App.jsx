@@ -1,10 +1,37 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 export default function LucinaVIPTracker() {
-  const [wins, setWins] = useState(0);
-  const [losses, setLosses] = useState(0);
-  const [memo, setMemo] = useState("");
-  const [gsp, setGsp] = useState(8400000);
+  const [wins, setWins] = useState(() => {
+    const saved = localStorage.getItem("lucina-wins");
+    return saved ? Number(saved) : 0;
+  });
+  const [losses, setLosses] = useState(() => {
+    const saved = localStorage.getItem("lucina-losses");
+    return saved ? Number(saved) : 0;
+  });
+  const [memo, setMemo] = useState(() => {
+    return localStorage.getItem("lucina-memo") || "";
+  });
+  const [gsp, setGsp] = useState(() => {
+    const saved = localStorage.getItem("lucina-gsp");
+    return saved ? Number(saved) : 8400000;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("lucina-wins", wins);
+  }, [wins]);
+
+  useEffect(() => {
+    localStorage.setItem("lucina-losses", losses);
+  }, [losses]);
+
+  useEffect(() => {
+    localStorage.setItem("lucina-memo", memo);
+  }, [memo]);
+
+  useEffect(() => {
+    localStorage.setItem("lucina-gsp", gsp);
+  }, [gsp]);
 
   const vipBorder = 14200000;
   const diff = Math.max(0, vipBorder - gsp);
