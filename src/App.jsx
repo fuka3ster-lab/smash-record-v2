@@ -5,16 +5,25 @@ export default function LucinaVIPTracker() {
     const saved = localStorage.getItem("lucina-wins");
     return saved ? Number(saved) : 0;
   });
+
   const [losses, setLosses] = useState(() => {
     const saved = localStorage.getItem("lucina-losses");
     return saved ? Number(saved) : 0;
   });
+
   const [memo, setMemo] = useState(() => {
     return localStorage.getItem("lucina-memo") || "";
   });
-  const [gsp, setGsp] = useState(() => {
-    const saved = localStorage.getItem("lucina-gsp");
-    return saved ? Number(saved) : 8400000;
+
+  // 表示用は「万」単位
+  const [gspInput, setGspInput] = useState(() => {
+    const saved = localStorage.getItem("lucina-gsp-input");
+    return saved ? Number(saved) : 840;
+  });
+
+  const [startGspInput, setStartGspInput] = useState(() => {
+    const saved = localStorage.getItem("lucina-start-gsp-input");
+    return saved ? Number(saved) : 840;
   });
 
   const [history, setHistory] = useState(() => {
@@ -27,10 +36,16 @@ export default function LucinaVIPTracker() {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [startGsp, setStartGsp] = useState(() => {
-    const saved = localStorage.getItem("lucina-start-gsp");
-    return saved ? Number(saved) : 8400000;
+  const [vipBorderInput, setVipBorderInput] = useState(() => {
+    const saved = localStorage.getItem("lucina-vip-border-input");
+    return saved ? Number(saved) : 1420;
   });
+
+  const gsp = gspInput * 10000;
+  const startGsp = startGspInput * 10000;
+  const vipBorder = vipBorderInput * 10000;
+
+  const remainingToVip = Math.max(0, vipBorder - gsp);
 
   useEffect(() => {
     localStorage.setItem("lucina-wins", wins);
@@ -45,11 +60,18 @@ export default function LucinaVIPTracker() {
   }, [memo]);
 
   useEffect(() => {
-    localStorage.setItem("lucina-gsp", gsp);
-  }, [gsp]);
+    localStorage.setItem("lucina-gsp-input", gspInput);
+  }, [gspInput]);
 
   useEffect(() => {
-    localStorage.setItem("lucina-history", JSON.stringify(history));
+    localStorage.setItem("lucina-start-gsp-input", startGspInput);
+  }, [startGspInput]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "lucina-history",
+      JSON.stringify(history)
+    );
   }, [history]);
 
   useEffect(() => {
@@ -60,47 +82,18 @@ export default function LucinaVIPTracker() {
   }, [gspHistory]);
 
   useEffect(() => {
-    localStorage.setItem("lucina-start-gsp", startGsp);
-  }, [startGsp]);
-
-  const [vipBorder, setVipBorder] = useState(() => {
-    const saved = localStorage.getItem("lucina-vip-border");
-    return saved ? Number(saved) : 14200000;
-  });
-
-  useEffect(() => {
-    const fetchVipBorder = async () => {
-      try {
-        const response = await fetch(
-          "https://elitegsp.com/api/ultimate"
-        );
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        if (data?.eliteGSP) {
-          setVipBorder(Number(data.eliteGSP));
-          localStorage.setItem(
-            "lucina-vip-border",
-            String(data.eliteGSP)
-          );
-        }
-      } catch (error) {
-        console.log("VIP取得失敗", error);
-      }
-    };
-
-    fetchVipBorder();
-  }, []);
-  const diff = Math.max(0, vipBorder - gsp);
+    localStorage.setItem(
+      "lucina-vip-border-input",
+      vipBorderInput
+    );
+  }, [vipBorderInput]);
 
   const addWin = () => {
     setWins((prev) => prev + 1);
 
-    setGsp((prev) => {
-      const updated = prev + 100000;
-      setGspHistory((history) => [...history, updated]);
+    setGspInput((prev) => {
+      const updated = prev + 10;
+      setGspHistory((history) => [...history, updated * 10000]);
       return updated;
     });
 
@@ -110,9 +103,9 @@ export default function LucinaVIPTracker() {
   const addLoss = () => {
     setLosses((prev) => prev + 1);
 
-    setGsp((prev) => {
-      const updated = Math.max(0, prev - 100000);
-      setGspHistory((history) => [...history, updated]);
+    setGspInput((prev) => {
+      const updated = Math.max(0, prev - 10);
+      setGspHistory((history) => [...history, updated * 10000]);
       return updated;
     });
 
@@ -145,45 +138,71 @@ export default function LucinaVIPTracker() {
 
     return first === "W" ? count : -count;
   })();
+
   const winRate =
-    totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+    totalGames > 0
+      ? Math.round((wins / totalGames) * 100)
+      : 0;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-8">
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Panel */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Header */}
           <div className="bg-zinc-900 rounded-3xl p-6 shadow-2xl border border-zinc-800">
             <h1 className="text-3xl font-bold mb-2">
               ⚔️ ルキナVIP管理
             </h1>
+
             <p className="text-zinc-400 leading-relaxed">
               「自分から崩れない」を意識するための簡易トラッカー
             </p>
           </div>
 
-          {/* GSP Panel */}
           <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
                 <div className="text-sm text-zinc-400 mb-1">
                   現在戦闘力
                 </div>
+
                 <div className="text-4xl md:text-5xl font-bold tracking-tight">
                   {gsp.toLocaleString()}
                 </div>
               </div>
 
-              <div className="md:text-right">
-                <div className="text-sm text-zinc-400 mb-1">
-                  推定VIPボーダー
+              <div className="md:text-right space-y-3">
+                <div>
+                  <div className="text-sm text-zinc-400 mb-1">
+                    VIPボーダー（下4桁省略）
+                  </div>
+
+                  <input
+                    type="number"
+                    value={vipBorderInput}
+                    onChange={(e) => {
+                      setVipBorderInput(Number(e.target.value));
+                    }}
+                    className="w-full md:w-64 rounded-2xl bg-zinc-800 border border-zinc-700 px-4 py-3 outline-none text-lg font-semibold"
+                  />
                 </div>
-                <div className="text-2xl font-semibold">
-                  {vipBorder.toLocaleString()}
+
+                <div className="text-xs text-zinc-500 leading-relaxed">
+                  最新VIPボーダー参考サイト
                 </div>
-                <div className="text-sm mt-2 text-zinc-400">
-                  VIPまであと {diff.toLocaleString()} GSP
+
+                <div>
+                  <a
+                    href="https://elitegsp.com/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sky-400 hover:text-sky-300 underline break-all"
+                  >
+                    https://elitegsp.com/
+                  </a>
+                </div>
+
+                <div className="mt-4 text-2xl md:text-4xl font-bold text-amber-300 tracking-tight">
+                  VIPまであと {remainingToVip.toLocaleString()} GSP
                 </div>
               </div>
             </div>
@@ -191,47 +210,40 @@ export default function LucinaVIPTracker() {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <div className="text-sm text-zinc-400 mb-2">
-                  開始時GSP
+                  開始時GSP（下4桁省略）
                 </div>
+
                 <input
                   type="number"
-                  value={startGsp}
-                  onChange={(e) => setStartGsp(Number(e.target.value))}
+                  value={startGspInput}
+                  onChange={(e) => {
+                    setStartGspInput(Number(e.target.value));
+                  }}
                   className="w-full rounded-2xl bg-zinc-800 border border-zinc-700 px-4 py-3 outline-none"
                 />
               </div>
 
               <div>
                 <div className="text-sm text-zinc-400 mb-2">
-                  終了時GSP
+                  終了時GSP（下4桁省略）
                 </div>
+
                 <input
                   type="number"
-                  value={gsp}
-                  onChange={(e) => setGsp(Number(e.target.value))}
+                  value={gspInput}
+                  onChange={(e) => {
+                    setGspInput(Number(e.target.value));
+                  }}
                   className="w-full rounded-2xl bg-zinc-800 border border-zinc-700 px-4 py-3 outline-none"
                 />
               </div>
             </div>
 
-            <div className="mt-6 space-y-2">
-              <input
-                type="range"
-                min="0"
-                max="20000000"
-                step="10000"
-                value={gsp}
-                onChange={(e) => setGsp(Number(e.target.value))}
-                className="w-full cursor-pointer"
-              />
-
-              <div className="text-xs text-zinc-500">
-                スライダーで現在戦闘力を調整可能
-              </div>
+            <div className="mt-2 text-sm text-zinc-500">
+              入力値 × 10,000 で計算されます
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <button
               onClick={addWin}
@@ -248,13 +260,13 @@ export default function LucinaVIPTracker() {
             </button>
           </div>
 
-          {/* Stats */}
           <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
             <h2 className="text-xl font-semibold mb-4">戦績</h2>
 
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="bg-zinc-800 rounded-2xl p-4 text-center">
                 <div className="text-zinc-400 text-sm">勝利</div>
+
                 <div className="text-4xl font-bold text-emerald-400">
                   {wins}
                 </div>
@@ -262,6 +274,7 @@ export default function LucinaVIPTracker() {
 
               <div className="bg-zinc-800 rounded-2xl p-4 text-center">
                 <div className="text-zinc-400 text-sm">敗北</div>
+
                 <div className="text-4xl font-bold text-rose-400">
                   {losses}
                 </div>
@@ -269,6 +282,7 @@ export default function LucinaVIPTracker() {
 
               <div className="bg-zinc-800 rounded-2xl p-4 text-center col-span-2 md:col-span-1">
                 <div className="text-zinc-400 text-sm">勝率</div>
+
                 <div className="text-4xl font-bold text-sky-400">
                   {winRate}%
                 </div>
@@ -282,7 +296,9 @@ export default function LucinaVIPTracker() {
             )}
 
             <div className="mt-5">
-              <div className="text-sm text-zinc-400 mb-2">最近の戦績</div>
+              <div className="text-sm text-zinc-400 mb-2">
+                最近の戦績
+              </div>
 
               <div className="flex flex-wrap gap-2">
                 {history.length === 0 && (
@@ -319,8 +335,12 @@ export default function LucinaVIPTracker() {
                 )}
 
                 {gspHistory.map((value, index) => {
-                  const previous = index === 0 ? startGsp : gspHistory[index - 1];
-                  const diffValue = value - previous;
+                  const previous =
+                    index === 0
+                      ? startGsp
+                      : gspHistory[index - 1];
+
+                  const change = value - previous;
 
                   return (
                     <div
@@ -334,10 +354,14 @@ export default function LucinaVIPTracker() {
                       </div>
 
                       <div
-                        className={diffValue >= 0 ? "text-emerald-400" : "text-rose-400"}
+                        className={
+                          change >= 0
+                            ? "text-emerald-400"
+                            : "text-rose-400"
+                        }
                       >
-                        {diffValue >= 0 ? "+" : ""}
-                        {diffValue.toLocaleString()}
+                        {change >= 0 ? "+" : ""}
+                        {change.toLocaleString()}
                       </div>
                     </div>
                   );
@@ -362,6 +386,7 @@ export default function LucinaVIPTracker() {
                 <p>・勝利：{wins}</p>
                 <p>・敗北：{losses}</p>
                 <p>・勝率：{winRate}%</p>
+
                 <p>
                   ・現在連勝/連敗：
                   {currentStreak > 0
@@ -382,9 +407,10 @@ export default function LucinaVIPTracker() {
           </div>
         </div>
 
-        {/* Memo Panel */}
         <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 flex flex-col">
-          <h2 className="text-2xl font-semibold mb-4">🦊 メモ</h2>
+          <h2 className="text-2xl font-semibold mb-4">
+            📝 メモ
+          </h2>
 
           <textarea
             value={memo}
