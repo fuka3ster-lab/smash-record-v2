@@ -22,6 +22,16 @@ export default function LucinaVIPTracker() {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [gspHistory, setGspHistory] = useState(() => {
+    const saved = localStorage.getItem("lucina-gsp-history");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [startGsp, setStartGsp] = useState(() => {
+    const saved = localStorage.getItem("lucina-start-gsp");
+    return saved ? Number(saved) : 8400000;
+  });
+
   useEffect(() => {
     localStorage.setItem("lucina-wins", wins);
   }, [wins]);
@@ -41,6 +51,17 @@ export default function LucinaVIPTracker() {
   useEffect(() => {
     localStorage.setItem("lucina-history", JSON.stringify(history));
   }, [history]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      "lucina-gsp-history",
+      JSON.stringify(gspHistory)
+    );
+  }, [gspHistory]);
+
+  useEffect(() => {
+    localStorage.setItem("lucina-start-gsp", startGsp);
+  }, [startGsp]);
 
   const [vipBorder, setVipBorder] = useState(() => {
     const saved = localStorage.getItem("lucina-vip-border");
@@ -76,13 +97,25 @@ export default function LucinaVIPTracker() {
 
   const addWin = () => {
     setWins((prev) => prev + 1);
-    setGsp((prev) => prev + 100000);
+
+    setGsp((prev) => {
+      const updated = prev + 100000;
+      setGspHistory((history) => [...history, updated]);
+      return updated;
+    });
+
     setHistory((prev) => ["W", ...prev].slice(0, 20));
   };
 
   const addLoss = () => {
     setLosses((prev) => prev + 1);
-    setGsp((prev) => Math.max(0, prev - 100000));
+
+    setGsp((prev) => {
+      const updated = Math.max(0, prev - 100000);
+      setGspHistory((history) => [...history, updated]);
+      return updated;
+    });
+
     setHistory((prev) => ["L", ...prev].slice(0, 20));
   };
 
@@ -91,6 +124,7 @@ export default function LucinaVIPTracker() {
     setLosses(0);
     setMemo("");
     setHistory([]);
+    setGspHistory([]);
   };
 
   const totalGames = wins + losses;
@@ -149,8 +183,34 @@ export default function LucinaVIPTracker() {
                   {vipBorder.toLocaleString()}
                 </div>
                 <div className="text-sm mt-2 text-zinc-400">
-                  あと {diff.toLocaleString()} GSP
+                  VIPまであと {diff.toLocaleString()} GSP
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <div className="text-sm text-zinc-400 mb-2">
+                  開始時GSP
+                </div>
+                <input
+                  type="number"
+                  value={startGsp}
+                  onChange={(e) => setStartGsp(Number(e.target.value))}
+                  className="w-full rounded-2xl bg-zinc-800 border border-zinc-700 px-4 py-3 outline-none"
+                />
+              </div>
+
+              <div>
+                <div className="text-sm text-zinc-400 mb-2">
+                  終了時GSP
+                </div>
+                <input
+                  type="number"
+                  value={gsp}
+                  onChange={(e) => setGsp(Number(e.target.value))}
+                  className="w-full rounded-2xl bg-zinc-800 border border-zinc-700 px-4 py-3 outline-none"
+                />
               </div>
             </div>
 
@@ -244,6 +304,52 @@ export default function LucinaVIPTracker() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl bg-zinc-800 p-4 border border-zinc-700">
+              <div className="text-lg font-semibold mb-3">
+                📈 GSP推移
+              </div>
+
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {gspHistory.length === 0 && (
+                  <div className="text-zinc-500 text-sm">
+                    まだ記録なし
+                  </div>
+                )}
+
+                {gspHistory.map((value, index) => {
+                  const previous = index === 0 ? startGsp : gspHistory[index - 1];
+                  const diffValue = value - previous;
+
+                  return (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between rounded-xl bg-zinc-900 px-4 py-2 text-sm"
+                    >
+                      <div>#{index + 1}</div>
+
+                      <div className="font-semibold">
+                        {value.toLocaleString()}
+                      </div>
+
+                      <div
+                        className={diffValue >= 0 ? "text-emerald-400" : "text-rose-400"}
+                      >
+                        {diffValue >= 0 ? "+" : ""}
+                        {diffValue.toLocaleString()}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setGspHistory([])}
+                className="mt-4 px-4 py-2 rounded-xl bg-zinc-700 hover:bg-zinc-600 transition text-sm"
+              >
+                推移履歴リセット
+              </button>
             </div>
 
             <div className="mt-6 rounded-2xl bg-zinc-800 p-4 border border-zinc-700">
