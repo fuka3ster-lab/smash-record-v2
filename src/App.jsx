@@ -75,13 +75,11 @@ export default function LucinaVIPTracker() {
 
   const addWin = () => {
     setWins((prev) => prev + 1);
-    setGspInput((prev) => prev + 10);
     setHistory((prev) => ["W", ...prev].slice(0, 20));
   };
 
   const addLoss = () => {
     setLosses((prev) => prev + 1);
-    setGspInput((prev) => Math.max(0, prev - 10));
     setHistory((prev) => ["L", ...prev].slice(0, 20));
   };
 
@@ -90,6 +88,7 @@ export default function LucinaVIPTracker() {
     setLosses(0);
     setMemo("");
     setHistory([]);
+    setStartGspInput(gspInput);
   };
 
   const totalGames = wins + losses;
