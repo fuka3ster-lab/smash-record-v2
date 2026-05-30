@@ -352,6 +352,32 @@ export default function LucinaVIPTracker() {
               🗓 今日の履歴
             </div>
 
+            <div className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300 max-h-48 overflow-y-auto">
+              {history.length === 0 && (
+                <div className="text-zinc-500">まだ履歴なし</div>
+              )}
+
+              {history.map((item, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl bg-zinc-100 dark:bg-zinc-800 px-4 py-2 flex items-center justify-between"
+                >
+                  <span>#{history.length - index}</span>
+
+                  <span
+                    className={
+                      item === "W"
+                        ? "text-emerald-500 font-bold"
+                        : "text-rose-500 font-bold"
+                    }
+                  >
+                    {item === "W" ? "勝利" : "敗北"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
             <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-800">
               <div className="text-lg font-semibold mb-3">
                 📚 対戦日誌
@@ -393,32 +419,7 @@ export default function LucinaVIPTracker() {
                 ))}
               </div>
             </div>
-
-            <div className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300 max-h-48 overflow-y-auto">
-              {history.length === 0 && (
-                <div className="text-zinc-500">まだ履歴なし</div>
-              )}
-
-              {history.map((item, index) => (
-                <div
-                  key={index}
-                  className="rounded-xl bg-zinc-100 dark:bg-zinc-800 px-4 py-2 flex items-center justify-between"
-                >
-                  <span>#{history.length - index}</span>
-
-                  <span
-                    className={
-                      item === "W"
-                        ? "text-emerald-500 font-bold"
-                        : "text-rose-500 font-bold"
-                    }
-                  >
-                    {item === "W" ? "勝利" : "敗北"}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
+          
 
           <button
             onClick={finishToday}
