@@ -35,6 +35,11 @@ export default function LucinaVIPTracker() {
     return saved ? Number(saved) : 1420;
   });
 
+  const [dailyRecords, setDailyRecords] = useState(() => {
+    const saved = localStorage.getItem("lucina-daily-records");
+    return saved ? JSON.parse(saved) : [];
+  });
+
   const gsp = gspInput * 10000;
   const vipBorder = vipBorderInput * 10000;
   const remainingToVip = Math.max(0, vipBorder - gsp);
@@ -73,6 +78,13 @@ export default function LucinaVIPTracker() {
     );
   }, [vipBorderInput]);
 
+  useEffect(() => {
+    localStorage.setItem(
+      "lucina-daily-records",
+      JSON.stringify(dailyRecords)
+    );
+  }, [dailyRecords]);
+
   const addWin = () => {
     setWins((prev) => prev + 1);
     setHistory((prev) => ["W", ...prev].slice(0, 20));
@@ -90,6 +102,28 @@ export default function LucinaVIPTracker() {
     setHistory([]);
     setStartGspInput(gspInput);
   };
+
+  const finishToday = () => {
+  const record = {
+    date: new Date().toLocaleDateString("ja-JP"),
+    startGsp: startGspInput,
+    endGsp: gspInput,
+    wins,
+    losses,
+    winRate,
+    memo,
+  };
+
+  setDailyRecords((prev) => [record, ...prev]);
+
+  // 次回開始GSPへ引継ぎ
+  setStartGspInput(gspInput);
+
+  // 当日データリセット
+  setWins(0);
+  setLosses(0);
+  setHistory([]);
+};
 
   const totalGames = wins + losses;
 
@@ -318,6 +352,48 @@ export default function LucinaVIPTracker() {
               🗓 今日の履歴
             </div>
 
+            <div className="bg-white dark:bg-zinc-900 rounded-3xl p-6 border border-zinc-200 dark:border-zinc-800">
+              <div className="text-lg font-semibold mb-3">
+                📚 対戦日誌
+              </div>
+
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {dailyRecords.length === 0 && (
+                  <div className="text-zinc-500">
+                    まだ保存なし
+                  </div>
+                )}
+
+                {dailyRecords.map((record, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl bg-zinc-100 dark:bg-zinc-800 p-4"
+                  >
+                    <div className="font-bold mb-2">
+                      {record.date}
+                    </div>
+
+                    <div className="text-sm">
+                      {record.startGsp} →
+                      {record.endGsp}
+                    </div>
+
+                    <div className="text-sm">
+                      {record.wins}勝
+                      {record.losses}敗
+                      （勝率 {record.winRate}%）
+                    </div>
+
+                    {record.memo && (
+                      <div className="mt-2 text-xs whitespace-pre-wrap text-zinc-500">
+                        {record.memo}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2 text-sm text-zinc-700 dark:text-zinc-300 max-h-48 overflow-y-auto">
               {history.length === 0 && (
                 <div className="text-zinc-500">まだ履歴なし</div>
@@ -343,6 +419,13 @@ export default function LucinaVIPTracker() {
               ))}
             </div>
           </div>
+
+          <button
+            onClick={finishToday}
+            className="w-full px-4 py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white transition font-medium"
+          >
+            📅 今日を終了する
+          </button>
 
           <button
             onClick={resetSession}
